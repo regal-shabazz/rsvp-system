@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wedding Pass - RSVP Confirmed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              blush: "#f7f3f0",
+              sage: "#a8b5a0",
+              "dusty-rose": "#d4a4a4",
+              cream: "#faf8f5",
+            },
+            fontFamily: {
+              serif: ["Georgia", "Times New Roman", "serif"],
+              sans: ["Inter", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-blush via-cream to-white font-sans"
+  >
+    <!-- Back Button -->
+    <div class="pt-6 px-4">
+      <div class="max-w-md mx-auto">
+        <button
+          onclick="goBack()"
+          class="flex items-center text-gray-600 hover:text-gray-800 transition-colors duration-200 text-sm font-medium"
+        >
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            ></path>
+          </svg>
+          Back to Home
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div
+      class="flex items-center justify-center min-h-[calc(100vh-100px)] px-4 py-8"
+    >
+      <div class="max-w-md w-full">
+        <!-- QR Code Section -->
+        <div
+          class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-8 text-center"
+        >
+          <!-- QR Code Placeholder -->
+          <div class="mb-6">
+            <div
+              id="qr-code-container"
+              class="w-48 h-48 mx-auto bg-white rounded-2xl shadow-lg border-2 border-gray-100 flex items-center justify-center"
+            >
+              <!-- QR code will be injected here -->
+              <div
+                class="w-40 h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center"
+              >
+                <div class="text-gray-400 text-xs text-center">
+                  <div class="w-8 h-8 mx-auto mb-2 bg-gray-300 rounded"></div>
+                  QR Code
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Heading -->
+          <h1 class="text-2xl font-serif text-gray-800 mb-3">
+            Your Wedding Pass
+          </h1>
+
+          <!-- Confirmation Message -->
+          <p class="text-gray-600 text-sm leading-relaxed mb-6">
+            Please present this QR code at the venue entrance.
+            <span class="block mt-1 font-medium"
+              >Save this page or take a screenshot.</span
+            >
+          </p>
+
+          <!-- Guest Details (Optional) -->
+          <div class="bg-sage/10 rounded-xl p-4 mb-6">
+            <div class="text-sm text-gray-700">
+              <div class="font-medium">Confirmed for:</div>
+              <div id="guest-name" class="text-gray-600">
+                Sarah & Michael Johnson
+              </div>
+              <div id="guest-count" class="text-xs text-gray-500 mt-1">
+                Party of 2
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Card -->
+        <div
+          class="mt-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/50 p-6"
+        >
+          <h3 class="text-lg font-serif text-gray-800 mb-4 flex items-center">
+            <svg
+              class="w-5 h-5 mr-2 text-dusty-rose"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+            Important Notes
+          </h3>
+
+          <ul class="space-y-3 text-sm text-gray-600">
+            <li class="flex items-start">
+              <span
+                class="w-1.5 h-1.5 bg-dusty-rose rounded-full mt-2 mr-3 flex-shrink-0"
+              ></span>
+              <span>Arrive 15 minutes before the ceremony begins</span>
+            </li>
+            <li class="flex items-start">
+              <span
+                class="w-1.5 h-1.5 bg-dusty-rose rounded-full mt-2 mr-3 flex-shrink-0"
+              ></span>
+              <span>This QR code is unique to your party</span>
+            </li>
+            <li class="flex items-start">
+              <span
+                class="w-1.5 h-1.5 bg-dusty-rose rounded-full mt-2 mr-3 flex-shrink-0"
+              ></span>
+              <span>Contact us if you have any issues: (555) 123-4567</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Save Reminder -->
+        <!-- <div class="mt-4 text-center">
+          <button
+            onclick="saveToDevice()"
+            class="inline-flex items-center px-4 py-2 bg-sage/20 hover:bg-sage/30 rounded-full text-sm font-medium text-gray-700 transition-colors duration-200"
+          >
+            <svg
+              class="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              ></path>
+            </svg>
+            Save to Photos
+          </button>
+        </div> -->
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+      // Back button functionality
+      function goBack() {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          // Fallback if no history
+          window.location.href = "/";
+        }
+      }
+
+      // Save to device functionality
+      function saveToDevice() {
+        // This would typically trigger a download or share sheet
+        if (navigator.share) {
+          navigator.share({
+            title: "Wedding Pass",
+            text: "My wedding entry pass",
+            url: window.location.href,
+          });
+        } else {
+          // Fallback: copy URL to clipboard
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification("Link copied to clipboard!");
+          });
+        }
+      }
+
+      // Simple notification system
+      function showNotification(message) {
+        const notification = document.createElement("div");
+        notification.className =
+          "fixed top-4 right-4 bg-sage text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm";
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.remove();
+        }, 3000);
+      }
+
+      /* 
+      // Simulate QR code generation (replace with actual QR library)
+      function generateQRCode() {
+        // This is where you'd inject the actual QR code
+        // For example, using a library like qrcode.js:
+        // QRCode.toCanvas(document.getElementById('qr-code-container'), uniqueCode);
+
+        // For now, we'll just update the placeholder
+        const container = document.getElementById("qr-code-container");
+        container.innerHTML = `
+                <div class="w-40 h-40 bg-white border border-gray-200 rounded-xl flex items-center justify-center">
+                    <div class="text-xs text-gray-500 text-center">
+                        <div class="text-2xl mb-1">📱</div>
+                        QR Code<br>Generated
+                    </div>
+                </div>
+            `;
+      }
+ */
+
+      function generateQRCode() {
+        const stored = localStorage.getItem("rsvpData");
+
+        if (!stored) return;
+
+        const data = JSON.parse(stored);
+
+        // This is what the QR encodes
+        const qrValue = `${window.location.origin}/checkin.html?token=${data.token}`;
+        
+
+        const container = document.getElementById("qr-code-container");
+        container.innerHTML = ""; // clear placeholder
+
+        new QRCode(container, {
+          text: qrValue,
+          width: 180,
+          height: 180,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H,
+        });
+      }
+
+      // Initialize page
+      document.addEventListener("DOMContentLoaded", function () {
+        generateQRCode();
+
+        // You could populate guest details from URL parameters or local storage
+        // const urlParams = new URLSearchParams(window.location.search);
+        // document.getElementById('guest-name').textContent = urlParams.get('name') || 'Guest';
+
+        const stored = localStorage.getItem("rsvpData");
+
+        if (!stored) {
+          // fallback UX
+          document.getElementById("guest-name").textContent = "Guest";
+          document.getElementById("guest-count").textContent = "";
+        } else {
+          const data = JSON.parse(stored);
+          document.getElementById(
+            "guest-name"
+          ).textContent = `${data.firstName} ${data.lastName}`;
+          document.getElementById(
+            "guest-count"
+          ).textContent = `Party of ${data.guests}`;
+        }
+      });
+    </script>
+  </body>
+</html>
