@@ -247,12 +247,17 @@
 
         const data = JSON.parse(stored);
 
-        // This is what the QR encodes
-        const qrValue = `${window.location.origin}/rsvp-system/check-in.html?token=${data.token}`;
+        // 🔹 Derive base path dynamically (works on GitHub Pages + real hosting)
+        const basePath = window.location.pathname.replace(/\/[^\/]+$/, "");
+
+        // 🔹 This is what the QR actually encodes
+        const qrValue = `${window.location.origin}${basePath}/check-in.html?token=${data.token}`;
+
+        // // This is what the QR encodes
+        // const qrValue = `${window.location.origin}/rsvp-system/check-in.html?token=${data.token}`;
 
         // const qrValue = `${window.location.origin}/check-in.html?token=${data.token}`;
         // const qrValue = `${window.location.origin}${BASE_PATH}/check-in.html?token=${data.token}`;
-
 
         const container = document.getElementById("qr-code-container");
         container.innerHTML = ""; // clear placeholder
