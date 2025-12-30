@@ -248,8 +248,10 @@
         const data = JSON.parse(stored);
 
         // This is what the QR encodes
-        // const qrValue = `${window.location.origin}/checkin.html?token=${data.token}`;
-        const qrValue = `${window.location.origin}${BASE_PATH}/check-in.html?token=${data.token}`;
+        const qrValue = `${window.location.origin}/rsvp-system/check-in.html?token=${data.token}`;
+
+        // const qrValue = `${window.location.origin}/check-in.html?token=${data.token}`;
+        // const qrValue = `${window.location.origin}${BASE_PATH}/check-in.html?token=${data.token}`;
 
 
         const container = document.getElementById("qr-code-container");
