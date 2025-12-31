@@ -97,6 +97,13 @@
         onAuthStateChanged,
         signOut,
       } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        query,
+        orderBy,
+      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
@@ -109,6 +116,7 @@
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
+      const db = getFirestore(app);
 
       onAuthStateChanged(auth, (user) => {
         if (!user) {
@@ -123,14 +131,14 @@
       // ---------------------------
       // DATA SOURCE
       // ---------------------------
-      const STORAGE_KEY = "rsvpData";
-      let rsvpDataRaw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      //   const STORAGE_KEY = "rsvpData";
+      //   let rsvpDataRaw = JSON.parse(localStorage.getItem(STORAGE_KEY));
 
-      let rsvpData = Array.isArray(rsvpDataRaw)
-        ? rsvpDataRaw
-        : rsvpDataRaw
-        ? [rsvpDataRaw]
-        : [];
+      //   let rsvpData = Array.isArray(rsvpDataRaw)
+      //     ? rsvpDataRaw
+      //     : rsvpDataRaw
+      //     ? [rsvpDataRaw]
+      //     : [];
 
       // ---------------------------
       // ELEMENTS
@@ -139,9 +147,11 @@
       const searchInput = document.getElementById("searchInput");
       const statusFilter = document.getElementById("statusFilter");
       const logoutBtn = document.getElementById("logoutBtn");
+      let rsvpData = [];
 
       function initAdmin() {
-        renderTable(rsvpData);
+        // renderTable(rsvpData);
+        loadAllRsvps();
 
         searchInput.addEventListener("input", applyFilters);
         statusFilter.addEventListener("change", applyFilters);
@@ -157,78 +167,82 @@
         });
       }
 
+      async function loadAllRsvps() {
+        try {
+          const q = query(
+            collection(db, "rsvps"),
+            orderBy("createdAt", "desc")
+          );
+
+          const snapshot = await getDocs(q);
+
+          rsvpData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          renderTable(rsvpData);
+        } catch (err) {
+          console.error("Failed to load RSVPs", err);
+        }
+      }
+
       // ---------------------------
       // RENDER TABLE
       // ---------------------------
       function renderTable(data) {
-        tableBody.innerHTML = "";
+  tableBody.innerHTML = "";
 
-        if (data.length === 0) {
-          tableBody.innerHTML = `<tr><td colspan="4">No guests found</td></tr>`;
-          return;
-        }
+  if (!Array.isArray(data) || data.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="4">No guests found</td></tr>`;
+    return;
+  }
 
-        data.forEach((guest, index) => {
-          const tr = document.createElement("tr");
+  data.forEach((guest) => {
+    const tr = document.createElement("tr");
 
-          tr.innerHTML = `
-     <td>${guest.fullName}</td>
-<td class="${
-            guest.status === "checked-in" ? "status-checked" : "status-pending"
-          }">
-  ${guest.status === "checked-in" ? "Checked In" : "Awaiting"}
-</td>
-
+    tr.innerHTML = `
+      <td>${guest.fullName}</td>
+      <td class="${
+        guest.status === "checked-in"
+          ? "status-checked"
+          : "status-pending"
+      }">
+        ${guest.status === "checked-in" ? "Checked In" : "Awaiting"}
+      </td>
       <td>${guest.token}</td>
       <td>
-        <button class="danger" data-index="${index}">Delete</button>
+        <button class="danger" data-id="${guest.id}">Delete</button>
       </td>
     `;
 
-          tableBody.appendChild(tr);
-        });
-      }
+    tableBody.appendChild(tr);
+  });
+}
+
 
       // ---------------------------
       // FILTER LOGIC
       // ---------------------------
       function applyFilters() {
-        const searchValue = searchInput.value.toLowerCase();
-        const statusValue = statusFilter.value;
+  const searchValue = searchInput.value.toLowerCase();
+  const statusValue = statusFilter.value;
 
-        let filtered = rsvpData.filter((guest) =>
-          guest.name.toLowerCase().includes(searchValue)
-        );
+  let filtered = rsvpData.filter(guest =>
+    guest.fullName.toLowerCase().includes(searchValue)
+  );
 
-        if (statusValue === "checked-in") {
-          filtered = filtered.filter((g) => g.checkedIn);
-        }
+  if (statusValue === "checked-in") {
+    filtered = filtered.filter(g => g.status === "checked-in");
+  }
 
-        if (statusValue === "pending") {
-          filtered = filtered.filter((g) => !g.checkedIn);
-        }
+  if (statusValue === "awaiting") {
+    filtered = filtered.filter(g => g.status === "awaiting");
+  }
 
-        renderTable(filtered);
-      }
+  renderTable(filtered);
+}
 
-      // ---------------------------
-      // DELETE (WITH PIN)
-      // ---------------------------
-      tableBody.addEventListener("click", (e) => {
-        if (!e.target.matches(".danger")) return;
-
-        const index = e.target.dataset.index;
-        const pin = prompt("Enter admin PIN to delete:");
-
-        if (pin !== "1234") {
-          alert("Wrong PIN");
-          return;
-        }
-
-        rsvpData.splice(index, 1);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(rsvpData));
-        applyFilters();
-      });
     </script>
   </body>
 </html>
