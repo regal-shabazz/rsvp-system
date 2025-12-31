@@ -27,6 +27,19 @@ const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
 const logoutBtn = document.getElementById("logoutBtn");
 
+function initAdmin() {
+  renderTable(rsvpData);
+
+  searchInput.addEventListener("input", applyFilters);
+  statusFilter.addEventListener("change", applyFilters);
+
+  logoutBtn.addEventListener("click", () => {
+    sessionStorage.removeItem("isAdmin");
+    window.location.href = "./admin-login.html";
+  });
+}
+
+
 // ---------------------------
 // RENDER TABLE
 // ---------------------------
@@ -97,18 +110,3 @@ tableBody.addEventListener("click", (e) => {
   applyFilters();
 });
 
-// ---------------------------
-// EVENTS
-// ---------------------------
-searchInput.addEventListener("input", applyFilters);
-statusFilter.addEventListener("change", applyFilters);
-
-logoutBtn.addEventListener("click", () => {
-  sessionStorage.removeItem("isAdmin");
-  window.location.href = "./admin-login.html";
-});
-
-// ---------------------------
-// INIT
-// ---------------------------
-renderTable(rsvpData);
