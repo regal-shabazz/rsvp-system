@@ -1,16 +1,46 @@
 // ---------------------------
 // AUTH GUARD
 // ---------------------------
-window.addEventListener("DOMContentLoaded", () => {
-  const isAdmin = sessionStorage.getItem("isAdmin");
+// window.addEventListener("DOMContentLoaded", () => {
+//   const isAdmin = sessionStorage.getItem("isAdmin");
 
-  if (!isAdmin) {
+//   if (!isAdmin) {
+//     window.location.href = "./404.html";
+//     return;
+//   }
+
+//   initAdmin();
+// });
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
+  authDomain: "muzzstorydb.firebaseapp.com",
+  projectId: "muzzstorydb",
+  storageBucket: "muzzstorydb.firebasestorage.app",
+  messagingSenderId: "608283838734",
+  appId: "1:608283838734:web:4a1e52a6c36a9b9ef6af5f",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
     window.location.href = "./404.html";
     return;
   }
 
+  // user is authenticated
   initAdmin();
 });
+
 
 
 // ---------------------------
@@ -33,10 +63,16 @@ function initAdmin() {
   searchInput.addEventListener("input", applyFilters);
   statusFilter.addEventListener("change", applyFilters);
 
-  logoutBtn.addEventListener("click", () => {
-    sessionStorage.removeItem("isAdmin");
-    window.location.href = "./admin-login.html";
-  });
+//   logoutBtn.addEventListener("click", () => {
+//     sessionStorage.removeItem("isAdmin");
+//     window.location.href = "./admin-login.html";
+//   });
+
+logoutBtn.addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "./admin-login.html";
+});
+
 }
 
 
