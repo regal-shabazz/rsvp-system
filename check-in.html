@@ -1,263 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wedding Check-In</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'serif': ['Playfair Display', 'serif'],
-                        'sans': ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ["Playfair Display", "serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
     </script>
     <style>
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        
-        .animate-fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        .animate-fade-in {
-            animation: fadeIn 0.4s ease-out;
-        }
-        
-        .animate-delay-200 {
-            animation-delay: 0.2s;
-            animation-fill-mode: both;
-        }
-        
-        .animate-delay-400 {
-            animation-delay: 0.4s;
-            animation-fill-mode: both;
-        }
-    </style>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 p-4 font-sans">
-    <div class="max-w-md mx-auto pt-8">
-        <!-- Header / Status Area -->
-        <div class="animate-fade-in mb-6 text-center">
-            <div id="statusBadge" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium mb-2">
-                <!-- Status will be updated by JavaScript -->
-                <div class="w-2 h-2 rounded-full mr-2"></div>
-                <span id="statusText">Awaiting Check-In</span>
-            </div>
-            <h1 class="text-2xl font-serif font-semibold text-gray-800">Wedding Check-In</h1>
-        </div>
-
-        <!-- Guest Information Card -->
-        <div class="animate-fade-in-up animate-delay-200 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-6">
-            <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4">Guest Information</h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Guest Name</label>
-                    <div class="bg-gray-50 rounded-lg p-3 border">
-                        <span id="guestName" class="text-gray-800 font-medium">[Guest name will load here]</span>
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Party Size</label>
-                    <div class="bg-gray-50 rounded-lg p-3 border">
-                        <span id="partySize" class="text-gray-800 font-medium">[Party size will load here]</span>
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">RSVP Reference</label>
-                    <div class="bg-gray-50 rounded-lg p-3 border">
-                        <span id="rsvpToken" class="text-gray-800 font-mono text-sm">[Token will load here]</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Area (Admin-Only) -->
-        <div class="animate-fade-in-up animate-delay-400 mb-6">
-            <button 
-                id="checkInButton" 
-                class="w-full bg-rose-500 hover:bg-rose-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
-                onclick="handleCheckInClick()"
-            >
-                <span id="buttonText">Check In Guest</span>
-            </button>
-        </div>
-
-        <!-- Informational Message -->
-        <div class="animate-fade-in-up animate-delay-400 bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p id="infoMessage" class="text-sm text-blue-700">
-                        Please present this screen to the event staff for check-in.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-<script type="module">
-  // Firebase imports (same CDN style you used)
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    query,
-    where,
-    getDocs,
-    doc,
-    updateDoc,
-    serverTimestamp,
-  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
-  // Firebase config (same as index.html)
-  const firebaseConfig = {
-    apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
-    authDomain: "muzzstorydb.firebaseapp.com",
-    projectId: "muzzstorydb",
-    storageBucket: "muzzstorydb.firebasestorage.app",
-    messagingSenderId: "608283838734",
-    appId: "1:608283838734:web:4a1e52a6c36a9b9ef6af5f",
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  let guestDocRef = null;
-  let guestData = null;
-  let checkInStatus = "awaiting";
-  let isAdmin = false; // we'll wire later
-
-  document.addEventListener("DOMContentLoaded", init);
-
-  async function init() {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-
-    if (!token) {
-      setInvalid("Missing token");
-      return;
-    }
-
-    await loadGuestByToken(token);
-  }
-
-  async function loadGuestByToken(token) {
-    try {
-      const q = query(
-        collection(db, "rsvps"),
-        where("token", "==", token)
-      );
-
-      const snap = await getDocs(q);
-
-      if (snap.empty) {
-        setInvalid("Invalid or expired pass");
-        return;
       }
 
-      const docSnap = snap.docs[0];
-      guestDocRef = docSnap.ref;
-      guestData = docSnap.data();
-      checkInStatus = guestData.status;
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
 
-      updateGuestDisplay();
-      updateUIState();
-    } catch (err) {
-      console.error(err);
-      setInvalid("Error loading guest");
-    }
-  }
+      .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+      }
 
-  function setInvalid(message) {
-    checkInStatus = "invalid";
-    document.getElementById("guestName").textContent = message;
-    updateUIState();
-  }
+      .animate-fade-in {
+        animation: fadeIn 0.4s ease-out;
+      }
 
-  function updateGuestDisplay() {
-    document.getElementById("guestName").textContent = guestData.fullName;
-    document.getElementById(
-      "partySize"
-    ).textContent = `Party of ${guestData.guests}`;
-    document.getElementById("rsvpToken").textContent = guestData.token;
-  }
+      .animate-delay-200 {
+        animation-delay: 0.2s;
+        animation-fill-mode: both;
+      }
 
-  async function handleCheckInClick() {
-    if (!isAdmin) return;
-    if (checkInStatus !== "awaiting") return;
+      .animate-delay-400 {
+        animation-delay: 0.4s;
+        animation-fill-mode: both;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 p-4 font-sans"
+  >
+    <div class="max-w-md mx-auto pt-8">
+      <!-- Header / Status Area -->
+      <div class="animate-fade-in mb-6 text-center">
+        <div
+          id="statusBadge"
+          class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium mb-2"
+        >
+          <!-- Status will be updated by JavaScript -->
+          <div class="w-2 h-2 rounded-full mr-2"></div>
+          <span id="statusText">Awaiting Check-In</span>
+        </div>
+        <h1 class="text-2xl font-serif font-semibold text-gray-800">
+          Wedding Check-In
+        </h1>
+      </div>
 
-    try {
-      await updateDoc(guestDocRef, {
-        status: "checked-in",
-        checkedInAt: serverTimestamp(),
-        checkedInBy: "admin", // later replace with admin UID
+      <!-- Guest Information Card -->
+      <div
+        class="animate-fade-in-up animate-delay-200 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-6"
+      >
+        <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4">
+          Guest Information
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1"
+              >Guest Name</label
+            >
+            <div class="bg-gray-50 rounded-lg p-3 border">
+              <span id="guestName" class="text-gray-800 font-medium"
+                >[Guest name will load here]</span
+              >
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1"
+              >Party Size</label
+            >
+            <div class="bg-gray-50 rounded-lg p-3 border">
+              <span id="partySize" class="text-gray-800 font-medium"
+                >[Party size will load here]</span
+              >
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1"
+              >RSVP Reference</label
+            >
+            <div class="bg-gray-50 rounded-lg p-3 border">
+              <span id="rsvpToken" class="text-gray-800 font-mono text-sm"
+                >[Token will load here]</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Area (Admin-Only) -->
+      <div class="animate-fade-in-up animate-delay-400 mb-6">
+        <button
+          id="checkInButton"
+          class="w-full bg-rose-500 hover:bg-rose-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+          onclick="handleCheckInClick()"
+        >
+          <span id="buttonText">Check In Guest</span>
+        </button>
+      </div>
+
+      <!-- Informational Message -->
+      <div
+        class="animate-fade-in-up animate-delay-400 bg-blue-50 border border-blue-200 rounded-xl p-4"
+      >
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg
+              class="w-5 h-5 text-blue-500 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p id="infoMessage" class="text-sm text-blue-700">
+              Please present this screen to the event staff for check-in.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module">
+      // Firebase imports (same CDN style you used)
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        query,
+        where,
+        getDocs,
+        doc,
+        updateDoc,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+      // Firebase config (same as index.html)
+      const firebaseConfig = {
+        apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
+        authDomain: "muzzstorydb.firebaseapp.com",
+        projectId: "muzzstorydb",
+        storageBucket: "muzzstorydb.firebasestorage.app",
+        messagingSenderId: "608283838734",
+        appId: "1:608283838734:web:4a1e52a6c36a9b9ef6af5f",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+
+      let guestDocRef = null;
+      let guestData = null;
+      let checkInStatus = "awaiting";
+      let isAdmin = null; // we'll wire later
+
+      if (isAdmin === null) return; // auth not resolved yet
+
+      document.addEventListener("DOMContentLoaded", () => {
+        onAuthStateChanged(auth, (user) => {
+          isAdmin = !!user; // admin if logged in
+          init();
+        });
       });
 
-      checkInStatus = "checked-in";
-      updateUIState();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to check in guest");
-    }
-  }
+      async function init() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
 
-  // expose to button
-  window.handleCheckInClick = handleCheckInClick;
+        if (!token) {
+          setInvalid("Missing token");
+          return;
+        }
 
-  function updateUIState() {
-    const statusText = document.getElementById("statusText");
-    const checkInButton = document.getElementById("checkInButton");
-    const infoMessage = document.getElementById("infoMessage");
+        await loadGuestByToken(token);
+      }
 
-    if (checkInStatus === "awaiting") {
-      statusText.textContent = "Awaiting Check-In";
-    }
+      async function loadGuestByToken(token) {
+        try {
+          const q = query(collection(db, "rsvps"), where("token", "==", token));
 
-    if (checkInStatus === "checked-in") {
-      statusText.textContent = "Checked In";
-      checkInButton.disabled = true;
-      checkInButton.textContent = "Already Checked In";
-    }
+          const snap = await getDocs(q);
 
-    if (checkInStatus === "invalid") {
-      statusText.textContent = "Invalid Pass";
-      checkInButton.style.display = "none";
-    }
+          if (snap.empty) {
+            setInvalid("Invalid or expired pass");
+            return;
+          }
 
-    // guest view by default
-    if (!isAdmin) {
-      checkInButton.style.display = "none";
-      infoMessage.textContent =
-        "Please present this screen to the event staff for check-in.";
-    }
-  }
-</script>
+          const docSnap = snap.docs[0];
+          guestDocRef = docSnap.ref;
+          guestData = docSnap.data();
+          checkInStatus = guestData.status;
 
-</body>
+          updateGuestDisplay();
+          updateUIState();
+        } catch (err) {
+          console.error(err);
+          setInvalid("Error loading guest");
+        }
+      }
+
+      function setInvalid(message) {
+        checkInStatus = "invalid";
+        document.getElementById("guestName").textContent = message;
+        updateUIState();
+      }
+
+      function updateGuestDisplay() {
+        document.getElementById("guestName").textContent = guestData.fullName;
+        document.getElementById(
+          "partySize"
+        ).textContent = `Party of ${guestData.guests}`;
+        document.getElementById("rsvpToken").textContent = guestData.token;
+      }
+
+      async function handleCheckInClick() {
+        if (!isAdmin) return;
+        if (checkInStatus !== "awaiting") return;
+
+        try {
+          await updateDoc(guestDocRef, {
+            status: "checked-in",
+            checkedInAt: serverTimestamp(),
+            checkedInBy: "admin", // later replace with admin UID
+          });
+
+          checkInStatus = "checked-in";
+          updateUIState();
+        } catch (err) {
+          console.error(err);
+          alert("Failed to check in guest");
+        }
+      }
+
+      // expose to button
+      window.handleCheckInClick = handleCheckInClick;
+
+      function updateUIState() {
+        const statusText = document.getElementById("statusText");
+        const checkInButton = document.getElementById("checkInButton");
+        const infoMessage = document.getElementById("infoMessage");
+
+        if (checkInStatus === "awaiting") {
+          statusText.textContent = "Awaiting Check-In";
+        }
+
+        if (checkInStatus === "checked-in") {
+          statusText.textContent = "Checked In";
+          checkInButton.disabled = true;
+          checkInButton.textContent = "Already Checked In";
+        }
+
+        if (checkInStatus === "invalid") {
+          statusText.textContent = "Invalid Pass";
+          checkInButton.style.display = "none";
+        }
+
+        // guest view by default
+        if (isAdmin) {
+          checkInButton.style.display = "block";
+          infoMessage.textContent = "Confirm guest entry before check-in.";
+        } else {
+          checkInButton.style.display = "none";
+          infoMessage.textContent =
+            "Please present this screen to the event staff for check-in.";
+        }
+      }
+    </script>
+  </body>
 </html>
