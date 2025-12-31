@@ -161,155 +161,144 @@
         </div>
       </div>
     </div>
-    <script type="module">
-      // Firebase imports (same CDN style you used)
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-      import {
-        getFirestore,
-        collection,
-        query,
-        where,
-        getDocs,
-        doc,
-        updateDoc,
-        serverTimestamp,
-      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+   <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
-      import {
-        getAuth,
-        onAuthStateChanged,
-      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
+  authDomain: "muzzstorydb.firebaseapp.com",
+  projectId: "muzzstorydb",
+  storageBucket: "muzzstorydb.firebasestorage.app",
+  messagingSenderId: "608283838734",
+  appId: "1:608283838734:web:4a1e52a6c36a9b9ef6af5f",
+};
 
-      // Firebase config (same as index.html)
-      const firebaseConfig = {
-        apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
-        authDomain: "muzzstorydb.firebaseapp.com",
-        projectId: "muzzstorydb",
-        storageBucket: "muzzstorydb.firebasestorage.app",
-        messagingSenderId: "608283838734",
-        appId: "1:608283838734:web:4a1e52a6c36a9b9ef6af5f",
-      };
+// ✅ SINGLE app
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      const auth = getAuth(app);
+let guestDocRef = null;
+let guestData = null;
+let checkInStatus = "awaiting";
+let isAdmin = false;
 
-      let guestDocRef = null;
-      let guestData = null;
-      let checkInStatus = "awaiting";
-      let isAdmin = null; // we'll wire later
+document.addEventListener("DOMContentLoaded", () => {
+  onAuthStateChanged(auth, async (user) => {
+    isAdmin = !!user; // admin if logged in
+    await init();     // ONLY now proceed
+  });
+});
 
-      if (isAdmin === null) return; // auth not resolved yet
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
 
-      document.addEventListener("DOMContentLoaded", () => {
-        onAuthStateChanged(auth, (user) => {
-          isAdmin = !!user; // admin if logged in
-          init();
-        });
-      });
+  if (!token) {
+    setInvalid("Missing token");
+    return;
+  }
 
-      async function init() {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
+  await loadGuestByToken(token);
+}
 
-        if (!token) {
-          setInvalid("Missing token");
-          return;
-        }
+async function loadGuestByToken(token) {
+  try {
+    const q = query(collection(db, "rsvps"), where("token", "==", token));
+    const snap = await getDocs(q);
 
-        await loadGuestByToken(token);
-      }
+    if (snap.empty) {
+      setInvalid("Invalid or expired pass");
+      return;
+    }
 
-      async function loadGuestByToken(token) {
-        try {
-          const q = query(collection(db, "rsvps"), where("token", "==", token));
+    const docSnap = snap.docs[0];
+    guestDocRef = docSnap.ref;
+    guestData = docSnap.data();
+    checkInStatus = guestData.status;
 
-          const snap = await getDocs(q);
+    updateGuestDisplay();
+    updateUIState();
+  } catch (err) {
+    console.error(err);
+    setInvalid("Error loading guest");
+  }
+}
 
-          if (snap.empty) {
-            setInvalid("Invalid or expired pass");
-            return;
-          }
+function setInvalid(message) {
+  checkInStatus = "invalid";
+  document.getElementById("guestName").textContent = message;
+  updateUIState();
+}
 
-          const docSnap = snap.docs[0];
-          guestDocRef = docSnap.ref;
-          guestData = docSnap.data();
-          checkInStatus = guestData.status;
+function updateGuestDisplay() {
+  document.getElementById("guestName").textContent = guestData.fullName;
+  document.getElementById("partySize").textContent = `Party of ${guestData.guests}`;
+  document.getElementById("rsvpToken").textContent = guestData.token;
+}
 
-          updateGuestDisplay();
-          updateUIState();
-        } catch (err) {
-          console.error(err);
-          setInvalid("Error loading guest");
-        }
-      }
+window.handleCheckInClick = async function () {
+  if (!isAdmin || checkInStatus !== "awaiting") return;
 
-      function setInvalid(message) {
-        checkInStatus = "invalid";
-        document.getElementById("guestName").textContent = message;
-        updateUIState();
-      }
+  try {
+    await updateDoc(guestDocRef, {
+      status: "checked-in",
+      checkedInAt: serverTimestamp(),
+      checkedInBy: "admin",
+    });
 
-      function updateGuestDisplay() {
-        document.getElementById("guestName").textContent = guestData.fullName;
-        document.getElementById(
-          "partySize"
-        ).textContent = `Party of ${guestData.guests}`;
-        document.getElementById("rsvpToken").textContent = guestData.token;
-      }
+    checkInStatus = "checked-in";
+    updateUIState();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to check in guest");
+  }
+};
 
-      async function handleCheckInClick() {
-        if (!isAdmin) return;
-        if (checkInStatus !== "awaiting") return;
+function updateUIState() {
+  const statusText = document.getElementById("statusText");
+  const checkInButton = document.getElementById("checkInButton");
+  const infoMessage = document.getElementById("infoMessage");
 
-        try {
-          await updateDoc(guestDocRef, {
-            status: "checked-in",
-            checkedInAt: serverTimestamp(),
-            checkedInBy: "admin", // later replace with admin UID
-          });
+  if (checkInStatus === "awaiting") {
+    statusText.textContent = "Awaiting Check-In";
+  }
 
-          checkInStatus = "checked-in";
-          updateUIState();
-        } catch (err) {
-          console.error(err);
-          alert("Failed to check in guest");
-        }
-      }
+  if (checkInStatus === "checked-in") {
+    statusText.textContent = "Checked In";
+    checkInButton.disabled = true;
+    checkInButton.textContent = "Already Checked In";
+  }
 
-      // expose to button
-      window.handleCheckInClick = handleCheckInClick;
+  if (checkInStatus === "invalid") {
+    statusText.textContent = "Invalid Pass";
+    checkInButton.style.display = "none";
+    return;
+  }
 
-      function updateUIState() {
-        const statusText = document.getElementById("statusText");
-        const checkInButton = document.getElementById("checkInButton");
-        const infoMessage = document.getElementById("infoMessage");
+  if (isAdmin) {
+    checkInButton.style.display = "block";
+    infoMessage.textContent = "Confirm guest entry before check-in.";
+  } else {
+    checkInButton.style.display = "none";
+    infoMessage.textContent =
+      "Please present this screen to the event staff for check-in.";
+  }
+}
+</script>
 
-        if (checkInStatus === "awaiting") {
-          statusText.textContent = "Awaiting Check-In";
-        }
-
-        if (checkInStatus === "checked-in") {
-          statusText.textContent = "Checked In";
-          checkInButton.disabled = true;
-          checkInButton.textContent = "Already Checked In";
-        }
-
-        if (checkInStatus === "invalid") {
-          statusText.textContent = "Invalid Pass";
-          checkInButton.style.display = "none";
-        }
-
-        // guest view by default
-        if (isAdmin) {
-          checkInButton.style.display = "block";
-          infoMessage.textContent = "Confirm guest entry before check-in.";
-        } else {
-          checkInButton.style.display = "none";
-          infoMessage.textContent =
-            "Please present this screen to the event staff for check-in.";
-        }
-      }
-    </script>
   </body>
 </html>
