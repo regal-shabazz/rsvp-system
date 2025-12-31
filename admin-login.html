@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div class="w-full max-w-sm bg-white rounded-xl shadow p-6">
+      <h1 class="text-2xl font-semibold text-gray-800 mb-4 text-center">
+        Admin Login
+      </h1>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="text-sm text-gray-600">Email</label>
+          <input
+            type="email"
+            id="email"
+            required
+            class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring"
+          />
+        </div>
+
+        <div>
+          <label class="text-sm text-gray-600">Password</label>
+          <input
+            type="password"
+            id="password"
+            required
+            class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-black text-white py-2 rounded-lg hover:opacity-90"
+        >
+          Login
+        </button>
+      </form>
+
+      <p
+        id="error"
+        class="text-sm text-red-600 mt-4 hidden text-center"
+      ></p>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
+        authDomain: "muzzstorydb.firebaseapp.com",
+        projectId: "muzzstorydb",
+        storageBucket: "muzzstorydb.firebasestorage.app",
+        messagingSenderId: "608283838734",
+        appId: "1:608283838734:web:4a1e52a6c36a9b9ef6af5f",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+
+      // Auto-redirect if already logged in
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          window.location.href = "admin.html";
+        }
+      });
+
+      const form = document.getElementById("loginForm");
+      const errorEl = document.getElementById("error");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          window.location.href = "admin.html";
+        } catch (err) {
+          errorEl.textContent = "Invalid login credentials";
+          errorEl.classList.remove("hidden");
+        }
+      });
+    </script>
+  </body>
+</html>
