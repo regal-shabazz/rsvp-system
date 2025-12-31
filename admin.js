@@ -1,11 +1,17 @@
 // ---------------------------
 // AUTH GUARD
 // ---------------------------
-const isAdmin = sessionStorage.getItem("isAdmin");
+window.addEventListener("DOMContentLoaded", () => {
+  const isAdmin = sessionStorage.getItem("isAdmin");
 
-if (!isAdmin) {
-  window.location.href = "./404.html";
-}
+  if (!isAdmin) {
+    window.location.href = "./404.html";
+    return;
+  }
+
+  initAdmin();
+});
+
 
 // ---------------------------
 // DATA SOURCE
