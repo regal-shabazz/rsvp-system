@@ -63,6 +63,39 @@
         border: none;
         cursor: pointer;
       }
+
+      .success {
+        background: #28a745;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      .secondary {
+        background: #555;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      .badge {
+        font-size: 12px;
+        padding: 2px 6px;
+        background: #eee;
+        border-radius: 4px;
+      }
+
+      dialog {
+        border: none;
+        padding: 20px;
+        width: 320px;
+      }
+
+      dialog form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
     </style>
   </head>
   <body>
@@ -70,11 +103,20 @@
 
     <div class="controls">
       <input type="text" id="searchInput" placeholder="Search name..." />
+
       <select id="statusFilter">
         <option value="">All Status</option>
-        <option value="pending">Pending</option>
+        <option value="awaiting">Awaiting</option>
         <option value="checked-in">Checked In</option>
       </select>
+
+      <select id="adminFilter">
+        <option value="">All Guests</option>
+        <option value="admin">Admin Added</option>
+      </select>
+
+      <button id="addGuestBtn">Add Guest</button>
+      <button id="exportBtn">Export CSV</button>
       <button id="logoutBtn">Logout</button>
     </div>
 
@@ -83,12 +125,29 @@
         <tr>
           <th>Name</th>
           <th>Status</th>
-          <th>Token</th>
-          <th>Action</th>
+          <th>Source</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="guestTableBody"></tbody>
     </table>
+
+    <!-- ADD / EDIT MODAL -->
+    <dialog id="guestModal">
+      <form method="dialog" id="guestForm">
+        <h3 id="modalTitle">Add Guest</h3>
+
+        <input type="hidden" id="guestId" />
+
+        <input type="text" id="fullNameInput" placeholder="Full Name" required />
+        <input type="text" id="phoneInput" placeholder="Phone (optional)" />
+
+        <div style="display:flex; gap:10px">
+          <button type="submit" class="success">Save</button>
+          <button type="button" onclick="guestModal.close()">Cancel</button>
+        </div>
+      </form>
+    </dialog>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -103,6 +162,10 @@
         getDocs,
         query,
         orderBy,
+        addDoc,
+        updateDoc,
+        doc,
+        serverTimestamp,
       } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -118,131 +181,186 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
+      const tableBody = document.getElementById("guestTableBody");
+      const searchInput = document.getElementById("searchInput");
+      const statusFilter = document.getElementById("statusFilter");
+      const adminFilter = document.getElementById("adminFilter");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const addGuestBtn = document.getElementById("addGuestBtn");
+      const exportBtn = document.getElementById("exportBtn");
+
+      const guestModal = document.getElementById("guestModal");
+      const guestForm = document.getElementById("guestForm");
+      const guestIdInput = document.getElementById("guestId");
+      const fullNameInput = document.getElementById("fullNameInput");
+      const phoneInput = document.getElementById("phoneInput");
+      const modalTitle = document.getElementById("modalTitle");
+
+      let rsvpData = [];
+      let currentAdmin = null;
+
       onAuthStateChanged(auth, (user) => {
         if (!user) {
           window.location.href = "./404.html";
           return;
         }
-
-        // user is authenticated
-        initAdmin();
+        currentAdmin = user.email;
+        init();
       });
 
-      // ---------------------------
-      // DATA SOURCE
-      // ---------------------------
-      //   const STORAGE_KEY = "rsvpData";
-      //   let rsvpDataRaw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-
-      //   let rsvpData = Array.isArray(rsvpDataRaw)
-      //     ? rsvpDataRaw
-      //     : rsvpDataRaw
-      //     ? [rsvpDataRaw]
-      //     : [];
-
-      // ---------------------------
-      // ELEMENTS
-      // ---------------------------
-      const tableBody = document.getElementById("guestTableBody");
-      const searchInput = document.getElementById("searchInput");
-      const statusFilter = document.getElementById("statusFilter");
-      const logoutBtn = document.getElementById("logoutBtn");
-      let rsvpData = [];
-
-      function initAdmin() {
-        // renderTable(rsvpData);
+      function init() {
         loadAllRsvps();
-
         searchInput.addEventListener("input", applyFilters);
         statusFilter.addEventListener("change", applyFilters);
+        adminFilter.addEventListener("change", applyFilters);
 
-        //   logoutBtn.addEventListener("click", () => {
-        //     sessionStorage.removeItem("isAdmin");
-        //     window.location.href = "./admin-login.html";
-        //   });
-
-        logoutBtn.addEventListener("click", async () => {
+        logoutBtn.onclick = async () => {
           await signOut(auth);
           window.location.href = "./admin-login.html";
-        });
+        };
+
+        addGuestBtn.onclick = () => {
+          guestIdInput.value = "";
+          fullNameInput.value = "";
+          phoneInput.value = "";
+          modalTitle.textContent = "Add Guest";
+          guestModal.showModal();
+        };
+
+        exportBtn.onclick = exportCSV;
       }
 
       async function loadAllRsvps() {
-        try {
-          const q = query(
-            collection(db, "rsvps"),
-            orderBy("createdAt", "desc")
-          );
+        const q = query(collection(db, "rsvps"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
 
-          const snapshot = await getDocs(q);
+        rsvpData = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((g) => !g.deleted);
 
-          rsvpData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
+        renderTable(rsvpData);
+      }
 
-          renderTable(rsvpData);
-        } catch (err) {
-          console.error("Failed to load RSVPs", err);
+      function renderTable(data) {
+        tableBody.innerHTML = "";
+
+        if (!data.length) {
+          tableBody.innerHTML = `<tr><td colspan="4">No guests</td></tr>`;
+          return;
+        }
+
+        data.forEach((g) => {
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+            <td>${g.fullName}</td>
+            <td class="${g.status === "checked-in" ? "status-checked" : "status-pending"}">
+              ${g.status === "checked-in" ? "Checked In" : "Awaiting"}
+            </td>
+            <td>
+              ${g.adminAdded ? '<span class="badge">Admin</span>' : 'RSVP'}
+            </td>
+            <td>
+              ${g.status !== "checked-in"
+                ? `<button class="success" data-check="${g.id}">Check In</button>`
+                : ""
+              }
+              ${g.adminAdded
+                ? `<button class="secondary" data-edit="${g.id}">Edit</button>`
+                : ""
+              }
+              <button class="danger" data-del="${g.id}">Delete</button>
+            </td>
+          `;
+
+          tableBody.appendChild(tr);
+        });
+
+        tableBody.onclick = handleTableActions;
+      }
+
+      async function handleTableActions(e) {
+        const id = e.target.dataset.check || e.target.dataset.edit || e.target.dataset.del;
+        if (!id) return;
+
+        const ref = doc(db, "rsvps", id);
+
+        if (e.target.dataset.check) {
+          await updateDoc(ref, {
+            status: "checked-in",
+            checkedInAt: serverTimestamp(),
+            checkedInBy: currentAdmin,
+          });
+          loadAllRsvps();
+        }
+
+        if (e.target.dataset.edit) {
+          const g = rsvpData.find((x) => x.id === id);
+          guestIdInput.value = id;
+          fullNameInput.value = g.fullName;
+          phoneInput.value = g.phone || "";
+          modalTitle.textContent = "Edit Guest";
+          guestModal.showModal();
+        }
+
+        if (e.target.dataset.del) {
+          if (!confirm("Soft delete this guest?")) return;
+          await updateDoc(ref, { deleted: true });
+          loadAllRsvps();
         }
       }
 
-      // ---------------------------
-      // RENDER TABLE
-      // ---------------------------
-      function renderTable(data) {
-  tableBody.innerHTML = "";
+      guestForm.onsubmit = async (e) => {
+        e.preventDefault();
 
-  if (!Array.isArray(data) || data.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="4">No guests found</td></tr>`;
-    return;
-  }
+        const payload = {
+          fullName: fullNameInput.value.trim(),
+          phone: phoneInput.value.trim(),
+        };
 
-  data.forEach((guest) => {
-    const tr = document.createElement("tr");
+        if (guestIdInput.value) {
+          await updateDoc(doc(db, "rsvps", guestIdInput.value), payload);
+        } else {
+          await addDoc(collection(db, "rsvps"), {
+            ...payload,
+            status: "awaiting",
+            adminAdded: true,
+            createdAt: serverTimestamp(),
+          });
+        }
 
-    tr.innerHTML = `
-      <td>${guest.fullName}</td>
-      <td class="${
-        guest.status === "checked-in"
-          ? "status-checked"
-          : "status-pending"
-      }">
-        ${guest.status === "checked-in" ? "Checked In" : "Awaiting"}
-      </td>
-      <td>${guest.token}</td>
-      <td>
-        <button class="danger" data-id="${guest.id}">Delete</button>
-      </td>
-    `;
+        guestModal.close();
+        loadAllRsvps();
+      };
 
-    tableBody.appendChild(tr);
-  });
-}
-
-
-      // ---------------------------
-      // FILTER LOGIC
-      // ---------------------------
       function applyFilters() {
-  const searchValue = searchInput.value.toLowerCase();
-  const statusValue = statusFilter.value;
+        let data = [...rsvpData];
 
-  let filtered = rsvpData.filter(guest =>
-    guest.fullName.toLowerCase().includes(searchValue)
-  );
+        const q = searchInput.value.toLowerCase();
+        if (q) data = data.filter((g) => g.fullName.toLowerCase().includes(q));
 
-  if (statusValue === "checked-in") {
-    filtered = filtered.filter(g => g.status === "checked-in");
-  }
+        if (statusFilter.value)
+          data = data.filter((g) => g.status === statusFilter.value);
 
-  if (statusValue === "awaiting") {
-    filtered = filtered.filter(g => g.status === "awaiting");
-  }
+        if (adminFilter.value === "admin")
+          data = data.filter((g) => g.adminAdded);
 
-  renderTable(filtered);
-}
+        renderTable(data);
+      }
 
+      function exportCSV() {
+        const rows = [["Full Name", "Status", "Source"]];
+        rsvpData.forEach((g) =>
+          rows.push([g.fullName, g.status, g.adminAdded ? "Admin" : "RSVP"])
+        );
+
+        const csv = rows.map((r) => r.join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "guest-list.csv";
+        a.click();
+      }
     </script>
   </body>
 </html>
