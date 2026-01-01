@@ -96,10 +96,45 @@
         flex-direction: column;
         gap: 10px;
       }
+
+      .stat-box {
+        background: #fff;
+        padding: 12px 16px;
+        border-radius: 6px;
+        min-width: 120px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .stat-box strong {
+        font-size: 22px;
+        display: block;
+      }
     </style>
   </head>
   <body>
     <h1>Admin Dashboard</h1>
+
+    <div
+      id="statsBar"
+      style="display: flex; gap: 12px; margin: 15px 0; flex-wrap: wrap"
+    >
+      <div class="stat-box">
+        <strong id="statTotal">0</strong>
+        <div>Total Guests</div>
+      </div>
+      <div class="stat-box">
+        <strong id="statChecked">0</strong>
+        <div>Checked In</div>
+      </div>
+      <div class="stat-box">
+        <strong id="statAwaiting">0</strong>
+        <div>Awaiting</div>
+      </div>
+      <div class="stat-box">
+        <strong id="statAdmin">0</strong>
+        <div>Admin Added</div>
+      </div>
+    </div>
 
     <div class="controls">
       <input type="text" id="searchInput" placeholder="Search name..." />
@@ -139,10 +174,15 @@
 
         <input type="hidden" id="guestId" />
 
-        <input type="text" id="fullNameInput" placeholder="Full Name" required />
+        <input
+          type="text"
+          id="fullNameInput"
+          placeholder="Full Name"
+          required
+        />
         <input type="text" id="phoneInput" placeholder="Phone (optional)" />
 
-        <div style="display:flex; gap:10px">
+        <div style="display: flex; gap: 10px">
           <button type="submit" class="success">Save</button>
           <button type="button" onclick="guestModal.close()">Cancel</button>
         </div>
@@ -196,6 +236,11 @@
       const phoneInput = document.getElementById("phoneInput");
       const modalTitle = document.getElementById("modalTitle");
 
+      const statTotal = document.getElementById("statTotal");
+      const statChecked = document.getElementById("statChecked");
+      const statAwaiting = document.getElementById("statAwaiting");
+      const statAdmin = document.getElementById("statAdmin");
+
       let rsvpData = [];
       let currentAdmin = null;
 
@@ -239,6 +284,8 @@
           .filter((g) => !g.deleted);
 
         renderTable(rsvpData);
+        renderTable(rsvpData);
+        updateStats(rsvpData);
       }
 
       function renderTable(data) {
@@ -254,20 +301,24 @@
 
           tr.innerHTML = `
             <td>${g.fullName}</td>
-            <td class="${g.status === "checked-in" ? "status-checked" : "status-pending"}">
+            <td class="${
+              g.status === "checked-in" ? "status-checked" : "status-pending"
+            }">
               ${g.status === "checked-in" ? "Checked In" : "Awaiting"}
             </td>
             <td>
-              ${g.adminAdded ? '<span class="badge">Admin</span>' : 'RSVP'}
+              ${g.adminAdded ? '<span class="badge">Admin</span>' : "RSVP"}
             </td>
             <td>
-              ${g.status !== "checked-in"
-                ? `<button class="success" data-check="${g.id}">Check In</button>`
-                : ""
+              ${
+                g.status !== "checked-in"
+                  ? `<button class="success" data-check="${g.id}">Check In</button>`
+                  : ""
               }
-              ${g.adminAdded
-                ? `<button class="secondary" data-edit="${g.id}">Edit</button>`
-                : ""
+              ${
+                g.adminAdded
+                  ? `<button class="secondary" data-edit="${g.id}">Edit</button>`
+                  : ""
               }
               <button class="danger" data-del="${g.id}">Delete</button>
             </td>
@@ -279,8 +330,22 @@
         tableBody.onclick = handleTableActions;
       }
 
+      function updateStats(data) {
+        statTotal.textContent = data.length;
+        statChecked.textContent = data.filter(
+          (g) => g.status === "checked-in"
+        ).length;
+        statAwaiting.textContent = data.filter(
+          (g) => g.status === "awaiting"
+        ).length;
+        statAdmin.textContent = data.filter((g) => g.adminAdded).length;
+      }
+
       async function handleTableActions(e) {
-        const id = e.target.dataset.check || e.target.dataset.edit || e.target.dataset.del;
+        const id =
+          e.target.dataset.check ||
+          e.target.dataset.edit ||
+          e.target.dataset.del;
         if (!id) return;
 
         const ref = doc(db, "rsvps", id);
@@ -346,6 +411,8 @@
           data = data.filter((g) => g.adminAdded);
 
         renderTable(data);
+        renderTable(data);
+        updateStats(data);
       }
 
       function exportCSV() {
