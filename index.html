@@ -35,6 +35,22 @@
     />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script> 
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ["Playfair Display", "serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
   </head>
 
   <!-- body below -->
@@ -48,7 +64,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center">
-            <div class="text-2xl font-bold text-gray-900">TheMuzzStory</div>
+            <div class="font-serif text-2xl font-bold text-gray-900">TheMuzzStory</div>
           </div>
           <nav class="hidden md:flex space-x-8">
             <a
@@ -101,11 +117,11 @@
           class="mb-24 relative z-10 max-w-4xl mx-auto px-6 text-center text-white"
         >
           <h1
-            class="text-5xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent"
+            class="font-serif text-5xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent"
           >
             Zainab & Bolaji
           </h1>
-          <p class="text-xl md:text-2xl mb-8 text-purple-100">
+          <p class="font-sans text-xl md:text-2xl mb-8 text-purple-100">
             Join us as we celebrate love, laughter, and a beautiful new
             beginning.
           </p>
@@ -1067,7 +1083,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="md:flex justify-between gap-8">
           <div class="col-span-1 md:col-span-2">
-            <div class="text-2xl font-bold mb-4">TheMuzzStory</div>
+            <div class="font-serif text-2xl font-bold mb-4">TheMuzzStory</div>
             <p class="text-gray-400 mb-4">
               We joyfully invite you to come celebrate with us.
             </p>
