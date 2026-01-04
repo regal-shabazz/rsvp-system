@@ -77,14 +77,16 @@
         decoding="async"
       />
     </div>
-   
 
     <!-- CENTERING WRAPPER -->
-    <div class="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">    <h1
-            class="font-serif text-5xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-black to-purple-500 bg-clip-text text-transparent"
-          >
-            Zainab & Bolaji
-          </h1>
+    <div
+      class="relative z-10 min-h-screen flex flex-col items-center justify-center p-4"
+    >
+      <h1
+        class="font-serif text-5xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-black to-purple-500 bg-clip-text text-transparent"
+      >
+        Zainab & Bolaji
+      </h1>
       <div class="max-w-md w-full">
         <!-- Header / Status Area -->
         <div class="animate-fade-in mb-6 text-center">
@@ -93,7 +95,6 @@
             class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium mb-2"
           >
             <div class="w-2 h-2 rounded-full mr-2"></div>
-           
           </div>
           <h1 class="text-2xl font-serif font-semibold text-gray-800">
             Wedding Check-In
@@ -103,7 +104,8 @@
         <!-- Guest Information Card -->
         <div
           class="font-bold animate-fade-in-up animate-delay-200 bg-white/10 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-6"
-        > <span id="statusText" class="text-center">Awaiting Check-In</span>
+        >
+          <span id="statusText" class="text-center">Awaiting Check-In</span>
           <h2 class="text-lg font-serif font-semibold text-gray-800 mb-4">
             Guest Information
           </h2>
@@ -181,7 +183,146 @@
       </div>
     </div>
 
-    <!-- 🔒 JS untouched -->
-    <!-- your entire script block remains exactly the same -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        query,
+        where,
+        getDocs,
+        updateDoc,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyARpD_soCNWZb5__AAtu6VJUicCy3yWrxU",
+        authDomain: "muzzstorydb.firebaseapp.com",
+        projectId: "muzzstorydb",
+        storageBucket: "muzzstorydb.firebasestorage.app",
+        messagingSenderId: "608283838734",
+        appId: "1:608283838734:web:4a1e52a6c36a9b9ef6af5f",
+      };
+
+      // ✅ SINGLE app
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+
+      let guestDocRef = null;
+      let guestData = null;
+      let checkInStatus = "awaiting";
+      let isAdmin = false;
+
+      document.addEventListener("DOMContentLoaded", () => {
+        onAuthStateChanged(auth, async (user) => {
+          isAdmin = !!user; // admin if logged in
+          await init(); // ONLY now proceed
+        });
+      });
+
+      async function init() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+
+        if (!token) {
+          setInvalid("Missing token");
+          return;
+        }
+
+        await loadGuestByToken(token);
+      }
+
+      async function loadGuestByToken(token) {
+        try {
+          const q = query(collection(db, "rsvps"), where("token", "==", token));
+
+          const snap = await getDocs(q);
+
+          if (snap.empty) {
+            setInvalid("Invalid or expired pass");
+            return;
+          }
+
+          const docSnap = snap.docs[0];
+          guestDocRef = docSnap.ref;
+          guestData = docSnap.data();
+          checkInStatus = guestData.status;
+
+          updateGuestDisplay();
+          updateUIState();
+        } catch (err) {
+          console.error(err);
+          setInvalid("Error loading guest");
+        }
+      }
+
+      function setInvalid(message) {
+        checkInStatus = "invalid";
+        document.getElementById("guestName").textContent = message;
+        updateUIState();
+      }
+
+      function updateGuestDisplay() {
+        document.getElementById("guestName").textContent = guestData.fullName;
+        document.getElementById(
+          "partySize"
+        ).textContent = `Party of ${guestData.guests}`;
+        document.getElementById("rsvpToken").textContent = guestData.token;
+      }
+
+      window.handleCheckInClick = async function () {
+        if (!isAdmin || checkInStatus !== "awaiting") return;
+
+        try {
+          await updateDoc(guestDocRef, {
+            status: "checked-in",
+            checkedInAt: serverTimestamp(),
+            checkedInBy: "admin",
+          });
+
+          checkInStatus = "checked-in";
+          updateUIState();
+        } catch (err) {
+          console.error(err);
+          alert("Failed to check in guest");
+        }
+      };
+
+      function updateUIState() {
+        const statusText = document.getElementById("statusText");
+        const checkInButton = document.getElementById("checkInButton");
+        const infoMessage = document.getElementById("infoMessage");
+
+        if (checkInStatus === "awaiting") {
+          statusText.textContent = "Awaiting Check-In";
+        }
+
+        if (checkInStatus === "checked-in") {
+          statusText.textContent = "Checked In";
+          checkInButton.disabled = true;
+          checkInButton.textContent = "Already Checked In";
+        }
+
+        if (checkInStatus === "invalid") {
+          statusText.textContent = "Invalid Pass";
+          checkInButton.style.display = "none";
+          return;
+        }
+
+        if (isAdmin) {
+          checkInButton.style.display = "block";
+          infoMessage.textContent = "Confirm guest entry before check-in.";
+        } else {
+          checkInButton.style.display = "none";
+          infoMessage.textContent =
+            "Please present this screen to the event staff for check-in.";
+        }
+      }
+    </script>
   </body>
 </html>
